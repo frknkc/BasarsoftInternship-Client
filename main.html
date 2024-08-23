@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basarsoft Openlayers</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v10.1.0/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.1.0/ol.css">
+    <link href="https://cdn.jsdelivr.net/npm/jspanel4@4.15.0/dist/jspanel.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/v/dt/dt-2.1.4/b-3.1.1/sc-2.4.3/sb-1.8.0/sp-2.3.2/datatables.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="navbarContainer">
+        <nav>
+            <img src="basarsoft.png" alt="Basarsoft Logo">
+            <button id="addPointBtn">Nokta Ekle</button>            
+            <button id="editPointBtn">Noktaları Düzenle</button>
+        </nav>
+    </div>
+    <div id="map" class="map"></div>
+
+    <!-- Pop-up Penceresi -->
+    <div id="popup" class="popup">
+        <div id="popup-content">
+            <p><strong>X Koordinatı:</strong> <span id="coordX"></span></p>
+            <p><strong>Y Koordinatı:</strong> <span id="coordY"></span></p>
+            <label for="pointName">Nokta İsmi:</label>
+            <input type="text" id="pointName" placeholder="Nokta ismi girin">
+            <button id="savePointBtn">Kaydet</button>
+            <button id="closePopupBtn">İptal</button>
+        </div>
+    </div>  
+  
+
+
+    <!-- JS Dosyasını dahil ediyoruz -->
+     
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+    <script src="script.js"></script>
+
+    <script src="https://cdn.datatables.net/v/dt/dt-2.1.4/b-3.1.1/sc-2.4.3/sb-1.8.0/sp-2.3.2/datatables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspanel4@4.15.0/dist/jspanel.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspanel4@4.15.0/dist/extensions/modal/jspanel.modal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspanel4@4.15.0/dist/extensions/tooltip/jspanel.tooltip.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspanel4@4.15.0/dist/extensions/hint/jspanel.hint.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspanel4@4.15.0/dist/extensions/layout/jspanel.layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspanel4@4.15.0/dist/extensions/contextmenu/jspanel.contextmenu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspanel4@4.15.0/dist/extensions/dock/jspanel.dock.js"></script>
+</body>
+</html>

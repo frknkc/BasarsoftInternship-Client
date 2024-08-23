@@ -1,0 +1,88 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+#navbarContainer {
+    position: absolute;
+    bottom: 20px; /* Haritanın altına yakın olacak şekilde ayarlanır */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000; /* Haritanın üstünde kalması için */
+}
+
+nav {
+    background-color: rgba(255, 255, 255, 0.8); /* Yarı saydam bir arka plan */
+    padding: 10px 20px;
+    border-radius: 30px; /* Yuvarlatılmış köşeler */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+nav img {
+    height: 40px;
+    margin-right: 10px; /* Resim ile butonlar arasındaki boşluk */
+}
+
+nav button {
+    background-color: #041490;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 20px; /* Yuvarlatılmış köşeler */
+}
+
+nav button:hover {
+    background-color: #046ccc;
+}
+
+.map {
+    width: 100vw;
+    height: 100vh;
+}
+
+.popup {
+    position: fixed;
+    background-color: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    width: 500px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.popup input {
+    width: calc(100% - 22px);
+    padding: 5px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 50%;
+}
+
+.popup button {
+    background-color: #041490;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.popup button:hover {
+    background-color: #046ccc;
+}
+

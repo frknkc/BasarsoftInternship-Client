@@ -59,7 +59,7 @@ document.getElementById('addPointBtn').addEventListener('click', () => {
             center: event.coordinate,
             zoom: 10
         });
-      
+
         // Pop-up'ı göster ve konumunu noktanın aşağısında ayarla
         popup.style.display = 'block';
         popup.style.left = event.pixel[0] + 'px';
@@ -130,12 +130,12 @@ document.getElementById('addPointBtn').addEventListener('click', () => {
 //sayfa yüklendiğinde svg ekleyere tüm noktaları ekrana getirme işlemi
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const response = await fetch('https://localhost:7140/api/Point' , {
+        const response = await fetch('https://localhost:7140/api/Point', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             },
-            });
+        });
 
         console.log(response);
         //noktaları haritaya ekleme işlemi
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error getting points:', response.status);
         }
 
-        
+
     } catch (error) {
         console.error('Fetch error:', error);
         //js panelle bir bildirim pop-upı oluştur ve veri alınamadı hatası ver
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
 
         });
-        
+
 
     }
 });
@@ -200,6 +200,27 @@ const FetchAllPoints = async () => {
     }
 };
 
+const FetchPoint = async (id) => {
+    try {
+        const response = await fetch(`https://localhost:7140/api/Point/${id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Point:', data);
+            return data;
+        } else {
+            console.error('Error getting point:', response.status);
+        }
+    }
+    catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -208,8 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Noktaları Listele Butonuna Tıklama Olayı
     document.getElementById('editPointBtn').addEventListener('click', async () => {
         // jsPanel ile yeni bir panel oluşturma
-        jsPanel.create({
-            //datatables kullanarak tablo oluşturma işlemi
+        var table_panel = jsPanel.create({
             content: `<table id="pointsTable" class="table table-striped">
                         <thead>
                             <tr>
@@ -227,63 +247,136 @@ document.addEventListener('DOMContentLoaded', () => {
             position: 'center-top 0 58',
             contentSize: '800 550',
             borderRadius: '20px',
-            // Açılış animasyonu
             animateIn: 'jsPanelFadeIn',
-            // Kapanış animasyonu
             animateOut: 'jsPanelFadeOut',
-            // yukarıda sadece panel kapatma bulunsun
             headerControls: {
                 minimize: 'remove',
                 maximize: 'remove',
-            },          
-            
-
-          
+            },
             callback: async () => {
                 // DataTables ekleme
                 const data = await FetchAllPoints();
-                $('#pointsTable').DataTable({
+                const table = $('#pointsTable').DataTable({
                     data: data.data,
                     columns: [
-                        { data: 'name' , title: 'Ad' },
+                        { data: 'name', title: 'Ad' },
                         { data: 'pointX', title: 'Enlem' },
-                        { data: 'pointY' , title: 'Boylam' },
+                        { data: 'pointY', title: 'Boylam' },
                         {
                             data: null,
                             render: (data, type, row) => {
                                 return `
-                                    <button id="edit-btn" data-id="${row.id}">Düzenle</button>
-                                    <button id="delete-btn" data-id="${row.id}">Sil</button>
-                                    <button id="show-btn" data-id="${row.id}">Göster</button>
+                                    <button class="edit-btn" data-id="${row.id}">Düzenle</button>
+                                    <button class="delete-btn" data-id="${row.id}">Sil</button>
+                                    <button class="show-btn" data-id="${row.id}">Göster</button>
                                 `;
                             }
                         }
                     ]
                 });
 
-                //tablodoki göster butonuna tıklandığında animasyonlu zoom yaparak noktaya yaklaşma işlemi
-                $('#pointsTable tbody').on('click', '#show-btn', function () {
-                    const data = $('#pointsTable').DataTable().row($(this).parents('tr')).data();
-                    const feature = vectorSource.getFeatureById(data.id);
-                    map.getView().animate({
-                        center: feature.getGeometry().getCoordinates(),
-                        zoom: 10
-                    });
-                });
-           
 
-                // Kapat butonuna tıklama olayını ekleme
-                document.getElementById('closePointsPanel').addEventListener('click', () => {
-                    jsPanel.remove('pointsPanel');
+
+                // Düzenle butonuna tıklama olayını bağlama
+                $('#pointsTable tbody').on('click', '.edit-btn', async function () {
+                    const id = $(this).data('id');
+                    const name = table.row($(this).parents('tr')).data().name;
+
+                    const data = await FetchPoint(id);
+                    // jsPanel ile yeni bir panel oluşturma
+                    table_panel.close();
+                    jsPanel.create({
+                       content: `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px;">
+                       <label>Seçilen Noktanın Enlem Değeri: ${data.data.pointX}</label>
+                       <br>
+                       <label>Seçilen Noktanın Boylam Değeri: ${data.data.pointY}</label>
+                       <br>
+                       <label for="pointName" style="margin-top: 10px;">Ad:</label>
+                       <input type="text" id="editPointName" value="${name}" style="width: 80%; padding: 5px; margin-top: 5px;">
+                       <button id="savePointBtn" style="margin-top: 10px; padding: 5px 15px;">Kaydet</button>
+                   </div>`,
+                       id: 'editPointPanel',
+                       headerTitle: 'Nokta Düzenle',
+                       theme: 'primary',
+                       position: 'center 0 1',
+                       contentSize: '450 200',
+                       borderRadius: '20px',
+                       animateIn: 'jsPanelFadeIn',
+                       animateOut: 'jsPanelFadeOut',
+                       headerControls: {
+                           minimize: 'remove',
+                           maximize: 'remove',
+                       },
+                       callback: function() {
+                           // Kaydet butonuna tıklama olayını bağlama
+                           $(document).on('click', '#savePointBtn', async function () {
+                               const updatedName = document.getElementById('editPointName').value;
+                   
+                               const updatedPoint = {
+                                   id: id,
+                                   name: updatedName,
+                                   pointX: data.data.pointX,
+                                   pointY: data.data.pointY
+                               };
+                   
+                               try {
+                                   const response = await fetch(`https://localhost:7140/api/Point/${id}`, {
+                                       method: 'PUT',
+                                       headers: {
+                                           'Content-Type': 'application/json'
+                                       },
+                                       body: JSON.stringify(updatedPoint)
+                                   });
+                   
+                                   if (response.ok) {
+                                       console.log('Düzenlendi:', updatedPoint);
+               
+                                       // güncellendi mesajı ver
+                                       jsPanel.create({
+                                           headerTitle: 'Başarılı',
+                                           content: 'Nokta başarıyla güncellendi.',
+                                           contentSize: '100 100',
+                                           theme: 'success',
+                                           position: 'center',
+                                           contentSize: '300 100',
+                                           borderRadius: '20px',
+                                           animateIn: 'jsPanelFadeIn',
+                                           animateOut: 'jsPanelFadeOut',
+                                           headerControls: {
+                                               minimize: 'remove',
+                                               maximize: 'remove',
+                                           },
+                                       });
+               
+                                   } else {jsPanel.create({
+                                    headerTitle: 'Düzeneleme Başarısız',
+                                    content: 'Nokta düzenleme başarısız oldu.',
+                                    contentSize: '100 100',
+                                    theme: 'danger',
+                                    position: 'center',
+                                    contentSize: '300 100',
+                                    borderRadius: '20px',
+                                    animateIn: 'jsPanelFadeIn',
+                                    animateOut: 'jsPanelFadeOut',
+                                    headerControls: {
+                                        minimize: 'remove',
+                                        maximize: 'remove',
+                                    },
+                                    
+                                });
+                                   }
+                               } catch (error) {
+                                   console.error('Fetch hatası:', error);
+                               }
+                           });
+                       },
+
+                   });
+                   
                 });
 
-                // Düzenle ve Sil butonlarına tıklama olayları
-                document.getElementById('editPointBtn').addEventListener('click', async () => {
-                    const data = await FetchAllPoints();
-                    $('#pointsTable').DataTable().clear().rows.add(data.data).draw();
-                }
-                );
-                document.getElementById('delete-btn').addEventListener('click', async () => {
+                // Sil butonuna tıklama olayını bağlama
+                $('#pointsTable tbody').on('click', '.delete-btn', async function () {
                     const id = $(this).data('id');
                     try {
                         const response = await fetch(`https://localhost:7140/api/Point/${id}`, {
@@ -291,31 +384,165 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                         if (response.ok) {
                             console.log('Silindi:', id);
+                            table.row($(this).parents('tr')).remove().draw();
                         } else {
                             console.error('Silinemedi:', response.status);
                         }
                     } catch (error) {
                         console.error('Fetch hatası:', error);
                     }
-                    console.log('Sil:', id);
-                }
-                );
+                });
 
+                // Göster butonuna tıklama olayını bağlama
+                $('#pointsTable tbody').on('click', '.show-btn', async function () {
+                    const data = table.row($(this).parents('tr')).data();
+                    const feature = vectorSource.getFeatureById(data.id);
+                    table_panel.close();
+                   ZoomPoint(data.id);
+                });
+
+                
             }
         });
     });
 });
 
-//listede seçilen noktayı haritada gösterme işlemi
-document.getElementById('showPointBtn').addEventListener('click', async () => {
-    const data = await FetchAllPoints();
-    $('#pointsTable').DataTable().clear().rows.add(data.data).draw();
-    $('#pointsTable tbody').on('click', '#show-btn', function () {
-        const data = $('#pointsTable').DataTable().row($(this).parents('tr')).data();
-        const feature = vectorSource.getFeatureById(data.id);
+// haritadaki nokta seçilince bir jsPanel oluşturup seçilen noktanın bilgilerini gösterme işlemi ve düzenleme işlemi
+map.on('click', async (event) => {
+    map.forEachFeatureAtPixel(event.pixel, async (feature) => {
+        const id = feature.get('id');
+        const name = feature.get('name');
+        selectedFeature = feature;  
         map.getView().animate({
-            center: feature.getGeometry().getCoordinates(),
+            center: event.coordinate,
             zoom: 10
         });
+        editPoint(id, name);
     });
 });
+
+// nokta düzenleme işlemi
+const editPoint = async (id, name) => {
+    const data = await FetchPoint(id);
+     // jsPanel ile yeni bir panel oluşturma
+     jsPanel.create({
+        content: `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px;">
+        <label>Seçilen Noktanın Enlem Değeri: ${data.data.pointX}</label>
+        <br>
+        <label>Seçilen Noktanın Boylam Değeri: ${data.data.pointY}</label>
+        <br>
+        <label for="pointName" style="margin-top: 10px;">Ad:</label>
+        <input type="text" id="editPointName" value="${name}" style="width: 80%; padding: 5px; margin-top: 5px;">
+        <button id="savePointBtn" style="margin-top: 10px; padding: 5px 15px;">Kaydet</button>
+    </div>`,
+        id: 'editPointPanel',
+        headerTitle: 'Nokta Düzenle',
+        theme: 'primary',
+        position: 'center 0 1',
+        contentSize: '450 200',
+        borderRadius: '20px',
+        animateIn: 'jsPanelFadeIn',
+        animateOut: 'jsPanelFadeOut',
+        headerControls: {
+            minimize: 'remove',
+            maximize: 'remove',
+        },
+        callback: function() {
+            // Kaydet butonuna tıklama olayını bağlama
+            $(document).on('click', '#savePointBtn', async function () {
+                const updatedName = document.getElementById('editPointName').value;
+    
+                const updatedPoint = {
+                    id: id,
+                    name: updatedName,
+                    pointX: data.data.pointX,
+                    pointY: data.data.pointY
+                };
+    
+                try {
+                    const response = await fetch(`https://localhost:7140/api/Point/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(updatedPoint)
+                    });
+    
+                    if (response.ok) {
+                        console.log('Düzenlendi:', updatedPoint);
+
+                        // güncellendi mesajı ver
+                        jsPanel.create({
+                            headerTitle: 'Başarılı',
+                            content: 'Nokta başarıyla güncellendi.',
+                            contentSize: '100 100',
+                            theme: 'success',
+                            position: 'center',
+                            contentSize: '300 100',
+                            borderRadius: '20px',
+                            animateIn: 'jsPanelFadeIn',
+                            animateOut: 'jsPanelFadeOut',
+                            headerControls: {
+                                minimize: 'remove',
+                                maximize: 'remove',
+                            },
+                            
+                        });
+
+                    } else {
+                        console.error('Düzenlenemedi:', response.status);
+                    }
+                } catch (error) {
+                    console.error('Fetch hatası:', error);
+                }
+            });
+        },
+
+        onclosed: () => {
+            map.getView().animate({
+                center: ol.proj.fromLonLat([35, 39]),
+                zoom: 7
+            });
+        }
+    });
+};
+
+// Nokta yakınlaştırma işlemi
+const ZoomPoint = async (id) => {
+    const data = await FetchPoint(id);
+    const pointX = data.data.pointX;
+    const pointY = data.data.pointY;
+    map.getView().animate({
+        center: ol.proj.fromLonLat([pointX, pointY]),
+        zoom: 10
+    });
+    // bir jspanel oluşturup seçilen noktanın bilgilerini sayfanın en üstünde gösterme işlemi
+    jsPanel.create({
+        content: `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px;">
+        <label>Seçilen Noktanın Enlem Değeri: ${pointX}</label>
+        <br>
+        <label>Seçilen Noktanın Boylam Değeri: ${pointY}</label>
+        <br>
+        <label>Seçilen Noktanın Adı: ${data.data.name}</label>
+    </div>`,
+        id: 'showPointPanel',
+        headerTitle: 'Seçilen Nokta',
+        theme: 'primary',
+        position: 'center-top 0 1',
+        contentSize: '450 200',
+        borderRadius: '20px',
+        animateIn: 'jsPanelFadeIn',
+        animateOut: 'jsPanelFadeOut',
+        headerControls: {
+            minimize: 'remove',
+            maximize: 'remove',
+        },
+        onclosed: () => {
+            map.getView().animate({
+                center: ol.proj.fromLonLat([35, 39]),
+                zoom: 7
+            });
+        }
+    });
+};
+

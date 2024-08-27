@@ -43,9 +43,54 @@ nav button:hover {
 }
 
 .map {
-    width: 100vw;
+    width: 100%;
     height: 100vh;
+    transition: filter 0.5s ease, background-color 0.5s ease;
 }
+
+.controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+}
+
+#toggle-dark-mode button {
+    margin-bottom: 10px;
+    background-color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px;
+    cursor: pointer;
+    transition: background-color 0.5s ease, color 0.5s ease;
+    font-size: 500px;
+}
+
+
+#return-to-origin button {
+    background-color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px;
+    cursor: pointer;
+    transition: background-color 0.5s ease, color 0.5s ease;
+    font-size: 36px;
+}
+
+/* Dark Mode Stili ve Animasyon */
+.dark-mode .map {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+.dark-mode body {
+    background-color: #121212;
+    transition: background-color 0.5s ease;
+}
+
+
 
 .popup {
     position: fixed;
@@ -56,10 +101,11 @@ nav button:hover {
     display: none;
     z-index: 1000;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    width: 500px;
+    width: 300px;
     left: 50%;
-    top: 50%;
+    top: 20%;
     transform: translate(-50%, -50%);
+    text-align: center;
 }
 
 .popup input {
@@ -72,7 +118,7 @@ nav button:hover {
     width: 50%;
 }
 
-.popup button {
+button {
     background-color: #041490;
     border: none;
     color: white;
@@ -82,7 +128,7 @@ nav button:hover {
     border-radius: 5px;
 }
 
-.popup button:hover {
+button:hover {
     background-color: #046ccc;
 }
 

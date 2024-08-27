@@ -9,8 +9,23 @@ const map = new ol.Map({
     view: new ol.View({
         center: ol.proj.fromLonLat([35, 39]), // Türkiye'nin koordinatları (Enlem, Boylam)
         zoom: 7
-    })
+    }),
+   
 });
+
+
+
+document.getElementById('toggle-dark-mode').addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+});
+
+document.getElementById('return-to-origin').addEventListener('click', () => {
+    map.getView().animate({
+        center: ol.proj.fromLonLat([35, 39]),
+        zoom: 7
+    });
+}
+);
 
 // Nokta katmanı
 const vectorSource = new ol.source.Vector({ wrapX: false });
@@ -62,8 +77,6 @@ document.getElementById('addPointBtn').addEventListener('click', () => {
 
         // Pop-up'ı göster ve konumunu noktanın aşağısında ayarla
         popup.style.display = 'block';
-        popup.style.left = event.pixel[0] + 'px';
-        popup.style.top = event.pixel[1] + 'px';
 
         // çıkış butonuna tıklama işlemi
         document.getElementById('closePopupBtn').addEventListener('click', () => {
@@ -245,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
             headerTitle: 'Noktalar',
             theme: 'primary',
             position: 'center-top 0 58',
-            contentSize: '800 550',
+            contentSize: '750 700',
             borderRadius: '20px',
             animateIn: 'jsPanelFadeIn',
             animateOut: 'jsPanelFadeOut',
@@ -281,15 +294,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 $('#pointsTable tbody').on('click', '.edit-btn', async function () {
                     const id = $(this).data('id');
                     const name = table.row($(this).parents('tr')).data().name;
-
                     const data = await FetchPoint(id);
+                    map.getView().animate({
+                        center: ol.proj.fromLonLat([data.data.pointX, data.data.pointY]),
+                        zoom: 10
+                    });
                     // jsPanel ile yeni bir panel oluşturma
                     table_panel.close();
                     jsPanel.create({
                        content: `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px;">
-                       <label>Seçilen Noktanın Enlem Değeri: ${data.data.pointX}</label>
+                          <label for="pointX">Enlem:</label>
+                        <input type="text" id="editPointX" value="${data.data.pointX}" style="width: 80%; padding: 5px; margin-top: 5px;">
                        <br>
-                       <label>Seçilen Noktanın Boylam Değeri: ${data.data.pointY}</label>
+                          <label for="pointY">Boylam:</label>
+                       <input type="text" id="editPointY" value="${data.data.pointY}" style="width: 80%; padding: 5px; margin-top: 5px;">
                        <br>
                        <label for="pointName" style="margin-top: 10px;">Ad:</label>
                        <input type="text" id="editPointName" value="${name}" style="width: 80%; padding: 5px; margin-top: 5px;">
@@ -370,7 +388,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                }
                            });
                        },
-
+                    
+                          onclosed: () => {
+                            map.getView().animate({
+                                 center: ol.proj.fromLonLat([35, 39]),
+                                 zoom: 7
+                            });
+                        }
                    });
                    
                 });
@@ -385,6 +409,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (response.ok) {
                             console.log('Silindi:', id);
                             table.row($(this).parents('tr')).remove().draw();
+                            // silindi mesajı ver
+                            jsPanel.create({
+                                headerTitle: 'Başarılı',
+                                content: 'Nokta başarıyla silindi.',
+                                contentSize: '100 100',
+                                theme: 'success',
+                                position: 'center',
+                                contentSize: '300 100',
+                                borderRadius: '20px',
+                                animateIn: 'jsPanelFadeIn',
+                                animateOut: 'jsPanelFadeOut',
+                                headerControls: {
+                                    minimize: 'remove',
+                                    maximize: 'remove',
+                                },
+                            });
                         } else {
                             console.error('Silinemedi:', response.status);
                         }
@@ -400,10 +440,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     table_panel.close();
                    ZoomPoint(data.id);
                 });
-
-                
             }
+            
+
         });
+
+
     });
 });
 
@@ -413,11 +455,7 @@ map.on('click', async (event) => {
         const id = feature.get('id');
         const name = feature.get('name');
         selectedFeature = feature;  
-        map.getView().animate({
-            center: event.coordinate,
-            zoom: 10
-        });
-        editPoint(id, name);
+        ZoomPoint(id);
     });
 });
 
@@ -426,12 +464,10 @@ const editPoint = async (id, name) => {
     const data = await FetchPoint(id);
      // jsPanel ile yeni bir panel oluşturma
      jsPanel.create({
-        content: `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px;">
-        <label>Seçilen Noktanın Enlem Değeri: ${data.data.pointX}</label>
+        content: `<input type="text" id="editPointX" value="${data.data.pointX}" style="width: 80%; padding: 5px; margin-top: 5px;">
         <br>
-        <label>Seçilen Noktanın Boylam Değeri: ${data.data.pointY}</label>
+        <input type="text" id="editPointY" value="${data.data.pointY}" style="width: 80%; padding: 5px; margin-top: 5px;">
         <br>
-        <label for="pointName" style="margin-top: 10px;">Ad:</label>
         <input type="text" id="editPointName" value="${name}" style="width: 80%; padding: 5px; margin-top: 5px;">
         <button id="savePointBtn" style="margin-top: 10px; padding: 5px 15px;">Kaydet</button>
     </div>`,
@@ -512,11 +548,13 @@ const ZoomPoint = async (id) => {
     const data = await FetchPoint(id);
     const pointX = data.data.pointX;
     const pointY = data.data.pointY;
+
     map.getView().animate({
         center: ol.proj.fromLonLat([pointX, pointY]),
         zoom: 10
     });
     // bir jspanel oluşturup seçilen noktanın bilgilerini sayfanın en üstünde gösterme işlemi
+    
     jsPanel.create({
         content: `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px;">
         <label>Seçilen Noktanın Enlem Değeri: ${pointX}</label>
@@ -524,12 +562,13 @@ const ZoomPoint = async (id) => {
         <label>Seçilen Noktanın Boylam Değeri: ${pointY}</label>
         <br>
         <label>Seçilen Noktanın Adı: ${data.data.name}</label>
+        <button id="editPointBtn" style="margin-top: 10px; padding: 5px 15px;">Düzenle</button>
     </div>`,
         id: 'showPointPanel',
         headerTitle: 'Seçilen Nokta',
         theme: 'primary',
-        position: 'center-top 0 1',
-        contentSize: '450 200',
+        position: 'center-top 0 50',
+        contentSize: '450 150',
         borderRadius: '20px',
         animateIn: 'jsPanelFadeIn',
         animateOut: 'jsPanelFadeOut',

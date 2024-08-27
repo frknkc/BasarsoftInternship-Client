@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basarsoft Openlayers</title>
+    <title>Basarsoft Map</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/ol@v10.1.0/dist/ol.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.1.0/ol.css">
@@ -19,6 +19,10 @@
         </nav>
     </div>
     <div id="map" class="map"></div>
+    <div class="controls">
+        <button id="toggle-dark-mode"> ☀ </button>
+        <button id="return-to-origin"> ♻ </button>
+    </div>
 
     <!-- Pop-up Penceresi -->
     <div id="popup" class="popup">
@@ -27,6 +31,7 @@
             <p><strong>Y Koordinatı:</strong> <span id="coordY"></span></p>
             <label for="pointName">Nokta İsmi:</label>
             <input type="text" id="pointName" placeholder="Nokta ismi girin">
+            <br>
             <button id="savePointBtn">Kaydet</button>
             <button id="closePopupBtn">İptal</button>
         </div>

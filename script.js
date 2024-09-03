@@ -1,20 +1,3 @@
-// Harita oluşturma
-const map = new ol.Map({
-    target: 'map',
-    layers: [
-        new ol.layer.Tile({
-            source: new ol.source.OSM()
-        })
-    ],
-    view: new ol.View({
-        center: ol.proj.fromLonLat([35, 39]), // Türkiye'nin koordinatları (Enlem, Boylam)
-        zoom: 7
-    }),
-   
-});
-
-
-
 document.getElementById('toggle-dark-mode').addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
 });
@@ -27,29 +10,95 @@ document.getElementById('return-to-origin').addEventListener('click', () => {
 }
 );
 
-// Nokta katmanı
-const vectorSource = new ol.source.Vector({ wrapX: false });
-const vectorLayer = new ol.layer.Vector({
-    source: vectorSource
-});
-map.addLayer(vectorLayer);
-// SVG simgesi
-const svgIcon = `
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="256" height="256" viewBox="0 0 256 256" xml:space="preserve">
-    <g style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: none; fill-rule: nonzero; opacity: 1;" transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)" >
-        <path d="M 45 90 c -1.415 0 -2.725 -0.748 -3.444 -1.966 l -4.385 -7.417 C 28.167 65.396 19.664 51.02 16.759 45.189 c -2.112 -4.331 -3.175 -8.955 -3.175 -13.773 C 13.584 14.093 27.677 0 45 0 c 17.323 0 31.416 14.093 31.416 31.416 c 0 4.815 -1.063 9.438 -3.157 13.741 c -0.025 0.052 -0.053 0.104 -0.08 0.155 c -2.961 5.909 -11.41 20.193 -20.353 35.309 l -4.382 7.413 C 47.725 89.252 46.415 90 45 90 z" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(4,136,219); fill-rule: nonzero; opacity: 1;" transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
-        <path d="M 45 45.678 c -8.474 0 -15.369 -6.894 -15.369 -15.368 S 36.526 14.941 45 14.941 c 8.474 0 15.368 6.895 15.368 15.369 S 53.474 45.678 45 45.678 z" style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 10; fill: rgb(255,255,255); fill-rule: nonzero; opacity: 1;" transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
-    </g>
-</svg>`;
+// Harita oluşturma
+const map = new ol.Map({
+    target: 'map',
+    layers: [
+        new ol.layer.Tile({
+            source: new ol.source.OSM()
+        }),
+    ],
+    view: new ol.View({
+        center: ol.proj.fromLonLat([35, 39]), // Türkiye'nin koordinatları (Enlem, Boylam)
+        zoom: 7
+    }),
 
-// Stil tanımlama
-const pointStyle = new ol.style.Style({
-    image: new ol.style.Icon({
-        src: 'data:image/svg+xml;base64,' + btoa(svgIcon),
-        scale: 0.15, // Simgeyi ölçeklendirmek için
-        anchor: [0.5, 1] // İşaretin en alt noktasını belirlemek için
-    })
 });
+
+const FetchData = async () => {
+
+fetch('https://localhost:7140/api/Wkt')
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+       
+        // Eğer data bir dizi değilse, doğru yapıya erişin
+        const wktArray = Array.isArray(data) ? data : data.data || [];
+
+        wktArray.forEach(item => {
+            const wktString = item.wktString;
+          
+
+            const format = new ol.format.WKT();
+            const feature = format.readFeature(wktString, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:3857'
+            });
+
+            let style;
+            const geometryType = feature.getGeometry().getType();
+
+            if (geometryType === 'LINESTRING') {
+                style = new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#FF0000',
+                        width: 3
+                    })
+                });
+            } else if (geometryType === 'POLYGON') {
+                style = new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#0000FF',
+                        width: 3
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(0, 0, 255, 0.1)'
+                    })
+                });
+            } else if (geometryType === 'POINT') {
+
+                // SVG simgesi
+                
+
+                // Stil tanımlama
+                style = new ol.style.Style({
+                    image: new ol.style.Icon({
+                        src: 'data:image/svg+xml;base64,' + btoa(svgIcon),
+                        scale: 0.1, // Simgeyi ölçeklendirmek için
+                        anchor: [0.5, 1] // İşaretin en alt noktasını belirlemek için
+                    })
+                });
+            }
+
+            feature.setStyle(style);
+            const vectorSource = new ol.source.Vector({
+                features: [feature]
+            });
+
+            const vectorLayer = new ol.layer.Vector({
+                source: vectorSource
+            });
+
+            map.addLayer(vectorLayer);
+        });
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+    });
+}
+
+//sayfa yüklendiğinde FetchData fonksiyonunu çalıştır
+window.onload = FetchData;
 
 let selectedFeature = null;
 
@@ -65,11 +114,11 @@ const savePointBtn = document.getElementById('savePointBtn');
 document.getElementById('addPointBtn').addEventListener('click', () => {
     map.getViewport().style.cursor = 'crosshair'; // İmleci lokasyon imleci yap
     map.once('click', (event) => {
-        const coord = ol.proj.toLonLat(event.coordinate);
+        const coord = ol.proj.toLonLat(event.coordinate);       
         coordX.textContent = coord[0].toFixed(6);
         coordY.textContent = coord[1].toFixed(6);
 
-        //tıklandığında harita oraya animasyonlu zoom yapma işlemi
+        // Tıklandığında harita oraya animasyonlu zoom yapma işlemi
         map.getView().animate({
             center: event.coordinate,
             zoom: 10
@@ -78,9 +127,9 @@ document.getElementById('addPointBtn').addEventListener('click', () => {
         // Pop-up'ı göster ve konumunu noktanın aşağısında ayarla
         popup.style.display = 'block';
 
-        // çıkış butonuna tıklama işlemi
+        // Çıkış butonuna tıklama işlemi
         document.getElementById('closePopupBtn').addEventListener('click', () => {
-            //animasyonlu eski haline dönme işlemi
+            // Animasyonlu eski haline dönme işlemi
             map.getView().animate({
                 center: ol.proj.fromLonLat([35, 39]),
                 zoom: 7
@@ -93,33 +142,50 @@ document.getElementById('addPointBtn').addEventListener('click', () => {
 
         // Kaydet butonuna tıklama işlemi
         savePointBtn.addEventListener('click', async () => {
-            const point = {
-                pointX: parseFloat(coordX.textContent),
-                pointY: parseFloat(coordY.textContent),
+            const wktPoint = `POINT(${parseFloat(coordX.textContent)} ${parseFloat(coordY.textContent)})`;
+            const pointData = {
+                wktString: wktPoint,
                 name: pointNameInput.value
             };
+            
 
             try {
-                const response = await fetch('https://localhost:7140/api/Point', {
+                const response = await fetch('https://localhost:7140/api/Wkt', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(point)
+                    body: JSON.stringify(pointData)
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Point added:', data);
 
-                    // Yeni nokta haritaya eklendiğinde sayfayı yenileme işlemi
-                    const feature = new ol.Feature({
-                        geometry: new ol.geom.Point(ol.proj.fromLonLat([point.pointX, point.pointY])),
-                        id: data.id,
-                        name: point.name
+                    // Yeni nokta haritaya eklendiğinde
+                    const format = new ol.format.WKT();
+                    const feature = format.readFeature(wktPoint, {
+                        dataProjection: 'EPSG:4326',
+                        featureProjection: 'EPSG:3857'
                     });
+
+                    const pointStyle = new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 7,
+                            fill: new ol.style.Fill({
+                                color: '#00FF00'
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#000000',
+                                width: 2
+                            })
+                        })
+                    });
+
                     feature.setStyle(pointStyle);
+                    feature.setId(data.data.id);
+
                     vectorSource.addFeature(feature);
+
 
                 } else {
                     console.error('Error adding point:', response.status);
@@ -127,11 +193,14 @@ document.getElementById('addPointBtn').addEventListener('click', () => {
             } catch (error) {
                 console.error('Fetch error:', error);
             }
-            //animasyonlu eski haline dönme işlemi
+            FetchData();
+
+            // Animasyonlu eski haline dönme işlemi
             map.getView().animate({
                 center: ol.proj.fromLonLat([35, 39]),
                 zoom: 7
             });
+
 
             // Pop-up'ı gizle ve imleci normal yap
             popup.style.display = 'none';
@@ -140,115 +209,23 @@ document.getElementById('addPointBtn').addEventListener('click', () => {
     });
 });
 
-//sayfa yüklendiğinde svg ekleyere tüm noktaları ekrana getirme işlemi
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const response = await fetch('https://localhost:7140/api/Point', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        });
-
-        console.log(response);
-        //noktaları haritaya ekleme işlemi
-        if (response.ok) {
-            const data = await response.json();
-
-            data.data.forEach(point => {
-                const feature = new ol.Feature({
-                    geometry: new ol.geom.Point(ol.proj.fromLonLat([point.pointX, point.pointY])),
-                    id: point.id,
-                    name: point.name
-                });
-                feature.setStyle(pointStyle); // SVG simgesini uygula
-                vectorSource.addFeature(feature);
-            });
-        } else {
-            console.error('Error getting points:', response.status);
-        }
 
 
-    } catch (error) {
-        console.error('Fetch error:', error);
-        //js panelle bir bildirim pop-upı oluştur ve veri alınamadı hatası ver
-        jsPanel.create({
-            headerTitle: 'Hata',
-            content: 'Veri alınamadı! Lütfen tekrar deneyin.',
-            theme: 'danger',
-            position: 'center',
-            contentSize: '300 100',
-            borderRadius: '20px',
-            animateIn: 'jsPanelFadeIn',
-            animateOut: 'jsPanelFadeOut',
-            headerControls: {
-                minimize: 'remove',
-                maximize: 'remove',
-            },
 
-        });
-
-
-    }
-});
-
-const FetchAllPoints = async () => {
-    try {
-        const response = await fetch('https://localhost:7140/api/Point', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        if (response.ok) {
-            const data = await response.json();
-            console.log('All points:', data);
-            return data;
-        } else {
-            console.error('Error getting points:', response.status);
-        }
-    }
-    catch (error) {
-        console.error('Fetch error:', error);
-    }
-};
-
-const FetchPoint = async (id) => {
-    try {
-        const response = await fetch(`https://localhost:7140/api/Point/${id}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Point:', data);
-            return data;
-        } else {
-            console.error('Error getting point:', response.status);
-        }
-    }
-    catch (error) {
-        console.error('Fetch error:', error);
-    }
-};
-
-
+const FetchAllWks = async () => {
+    const response = await fetch('https://localhost:7140/api/Wkt');
+    const data = await response.json();
+    return data;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Map ve diğer başlangıç kodları burada...
-
-    // Noktaları Listele Butonuna Tıklama Olayı
-    document.getElementById('editPointBtn').addEventListener('click', async () => {
-        // jsPanel ile yeni bir panel oluşturma
-        var table_panel = jsPanel.create({
+    document.getElementById('listMenuBtn').addEventListener('click', () => {
+        let list_panel=jsPanel.create({
             content: `<table id="pointsTable" class="table table-striped">
                         <thead>
                             <tr>
                                 <th>Ad</th>
-                                <th>Enlem</th>
-                                <th>Boylam</th>
+                                <th>WKT String</th>
                                 <th>İşlemler</th>
                             </tr>
                         </thead>
@@ -267,321 +244,409 @@ document.addEventListener('DOMContentLoaded', () => {
                 maximize: 'remove',
             },
             callback: async () => {
-                // DataTables ekleme
-                const data = await FetchAllPoints();
-                const table = $('#pointsTable').DataTable({
-                    data: data.data,
+                const data = await FetchAllWks();
+
+                const table= $('#pointsTable').DataTable({
+                    data: data.data,// API'den gelen veriyi doğrudan kullanıyoruz
+                    pageLength: 4,
                     columns: [
-                        { data: 'name', title: 'Ad' },
-                        { data: 'pointX', title: 'Enlem' },
-                        { data: 'pointY', title: 'Boylam' },
+                        { data: 'name', title: 'Ad' },  // Veri modelinde "name" alanını kullanarak Ad sütununu oluşturuyoruz
+                        { data: 'wktString', title: 'WKT String' },  // WKT String doğru tanımlandı
                         {
                             data: null,
                             render: (data, type, row) => {
                                 return `
                                     <button class="edit-btn" data-id="${row.id}">Düzenle</button>
-                                    <button class="delete-btn" data-id="${row.id}">Sil</button>
                                     <button class="show-btn" data-id="${row.id}">Göster</button>
+                                    <button class="delete-btn" data-id="${row.id}">Sil</button>
                                 `;
                             }
                         }
                     ]
                 });
 
-
-
-                // Düzenle butonuna tıklama olayını bağlama
-                $('#pointsTable tbody').on('click', '.edit-btn', async function () {
-                    const id = $(this).data('id');
-                    const name = table.row($(this).parents('tr')).data().name;
-                    const data = await FetchPoint(id);
-                    map.getView().animate({
-                        center: ol.proj.fromLonLat([data.data.pointX, data.data.pointY]),
-                        zoom: 10
-                    });
-                    // jsPanel ile yeni bir panel oluşturma
-                    table_panel.close();
-                    jsPanel.create({
-                       content: `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px;">
-                          <label for="pointX">Enlem:</label>
-                        <input type="text" id="editPointX" value="${data.data.pointX}" style="width: 80%; padding: 5px; margin-top: 5px;">
-                       <br>
-                          <label for="pointY">Boylam:</label>
-                       <input type="text" id="editPointY" value="${data.data.pointY}" style="width: 80%; padding: 5px; margin-top: 5px;">
-                       <br>
-                       <label for="pointName" style="margin-top: 10px;">Ad:</label>
-                       <input type="text" id="editPointName" value="${name}" style="width: 80%; padding: 5px; margin-top: 5px;">
-                       <button id="savePointBtn" style="margin-top: 10px; padding: 5px 15px;">Kaydet</button>
-                   </div>`,
-                       id: 'editPointPanel',
-                       headerTitle: 'Nokta Düzenle',
-                       theme: 'primary',
-                       position: 'center 0 1',
-                       contentSize: '450 200',
-                       borderRadius: '20px',
-                       animateIn: 'jsPanelFadeIn',
-                       animateOut: 'jsPanelFadeOut',
-                       headerControls: {
-                           minimize: 'remove',
-                           maximize: 'remove',
-                       },
-                       callback: function() {
-                           // Kaydet butonuna tıklama olayını bağlama
-                           $(document).on('click', '#savePointBtn', async function () {
-                               const updatedName = document.getElementById('editPointName').value;
-                   
-                               const updatedPoint = {
-                                   id: id,
-                                   name: updatedName,
-                                   pointX: data.data.pointX,
-                                   pointY: data.data.pointY
-                               };
-                   
-                               try {
-                                   const response = await fetch(`https://localhost:7140/api/Point/${id}`, {
-                                       method: 'PUT',
-                                       headers: {
-                                           'Content-Type': 'application/json'
-                                       },
-                                       body: JSON.stringify(updatedPoint)
-                                   });
-                   
-                                   if (response.ok) {
-                                       console.log('Düzenlendi:', updatedPoint);
-               
-                                       // güncellendi mesajı ver
-                                       jsPanel.create({
-                                           headerTitle: 'Başarılı',
-                                           content: 'Nokta başarıyla güncellendi.',
-                                           contentSize: '100 100',
-                                           theme: 'success',
-                                           position: 'center',
-                                           contentSize: '300 100',
-                                           borderRadius: '20px',
-                                           animateIn: 'jsPanelFadeIn',
-                                           animateOut: 'jsPanelFadeOut',
-                                           headerControls: {
-                                               minimize: 'remove',
-                                               maximize: 'remove',
-                                           },
-                                       });
-               
-                                   } else {jsPanel.create({
-                                    headerTitle: 'Düzeneleme Başarısız',
-                                    content: 'Nokta düzenleme başarısız oldu.',
-                                    contentSize: '100 100',
-                                    theme: 'danger',
-                                    position: 'center',
-                                    contentSize: '300 100',
-                                    borderRadius: '20px',
-                                    animateIn: 'jsPanelFadeIn',
-                                    animateOut: 'jsPanelFadeOut',
-                                    headerControls: {
-                                        minimize: 'remove',
-                                        maximize: 'remove',
-                                    },
-                                    
-                                });
-                                   }
-                               } catch (error) {
-                                   console.error('Fetch hatası:', error);
-                               }
-                           });
-                       },
-                    
-                          onclosed: () => {
-                            map.getView().animate({
-                                 center: ol.proj.fromLonLat([35, 39]),
-                                 zoom: 7
-                            });
-                        }
-                   });
-                   
-                });
-
-                // Sil butonuna tıklama olayını bağlama
                 $('#pointsTable tbody').on('click', '.delete-btn', async function () {
-                    const id = $(this).data('id');
+                    const rowId = $(this).data('id');
                     try {
-                        const response = await fetch(`https://localhost:7140/api/Point/${id}`, {
+                        const response = await fetch(`https://localhost:7140/api/Wkt/${rowId}`, {
                             method: 'DELETE'
                         });
                         if (response.ok) {
-                            console.log('Silindi:', id);
                             table.row($(this).parents('tr')).remove().draw();
-                            // silindi mesajı ver
-                            jsPanel.create({
-                                headerTitle: 'Başarılı',
-                                content: 'Nokta başarıyla silindi.',
-                                contentSize: '100 100',
-                                theme: 'success',
-                                position: 'center',
-                                contentSize: '300 100',
-                                borderRadius: '20px',
-                                animateIn: 'jsPanelFadeIn',
-                                animateOut: 'jsPanelFadeOut',
-                                headerControls: {
-                                    minimize: 'remove',
-                                    maximize: 'remove',
-                                },
+                            map.getLayers().forEach(layer => {
+                                if (layer instanceof ol.layer.Vector) {
+                                    layer.getSource().clear();
+                                    layer.getSource().refresh();
+                                }
                             });
+                            
+
                         } else {
-                            console.error('Silinemedi:', response.status);
+                            console.error('Error deleting point:', response.status);
                         }
                     } catch (error) {
-                        console.error('Fetch hatası:', error);
+                        console.error('Fetch error:', error);
                     }
                 });
 
-                // Göster butonuna tıklama olayını bağlama
-                $('#pointsTable tbody').on('click', '.show-btn', async function () {
-                    const data = table.row($(this).parents('tr')).data();
-                    const feature = vectorSource.getFeatureById(data.id);
-                    table_panel.close();
-                   ZoomPoint(data.id);
+                $('#pointsTable tbody').on('click', '.show-btn', function () {
+                    console.log('show');
+
+                    const rowId = $(this).data('id');
+                    const feature = source.getFeatureById(rowId);
+                    list_panel.close();
+                    ZoomPoint(rowId);
                 });
+                
+            },
+            onclosed: function () {
+                //refresh map
+                FetchData();
             }
             
+        });
+    });
+});
 
+const fetchWktById = async (id) => {
+    const response = await fetch(`https://localhost:7140/api/Wkt/${id}`);
+    const data = await response.json();
+    return data;
+}
+
+const ZoomPoint = async (id) => {
+    const data = await fetchWktById(id);
+    //eğer feature line ise işlemi
+    if (data.data.wktString.includes("LINESTRING")) {
+        const wktString = data.data.wktString;
+        const name = data.data.name;
+        const format = new ol.format.WKT();
+        const feature = format.readFeature(wktString, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: 'EPSG:3857'
+        });
+        //lineın en alt ve en üst noktalarını alıp zoom yapma işlemi
+        let coordinates = feature.getGeometry().getCoordinates();
+        let firstPoint = coordinates[0];
+        let lastPoint = coordinates[coordinates.length - 1];
+        let center = [(firstPoint[0] + lastPoint[0]) / 2, (firstPoint[1] + lastPoint[1]) / 2];
+        map.getView().animate({
+            center: center,
+            zoom: 10
+        });
+    
+
+        var showPanel = jsPanel.create({
+            content: `<div>
+                    <h3>Nokta Adı: ${name}</h3>
+                    <p>WKT String: ${wktString}</p>
+                  </div>`,
+            headerTitle: 'Nokta Detayı',
+            theme: 'primary',
+            position: 'center-top 0 58',
+            contentSize: '400 200',
+            borderRadius: '20px',
+            animateIn: 'jsPanelFadeIn',
+            animateOut: 'jsPanelFadeOut',
+            headerControls: {
+                minimize: 'remove',
+                maximize: 'remove',
+            },
+            onclosed: () => {
+                map.getView().animate({
+                    center: ol.proj.fromLonLat([35, 39]),
+                    zoom: 7
+                });
+            }
+        });
+    }
+    if(data.data.wktString.includes("POINT")){
+        const wktString = data.data.wktString;
+        const name = data.data.name;
+        const format = new ol.format.WKT();
+        const feature = format.readFeature(wktString, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: 'EPSG:3857'
+        });
+        const pointX = feature.getGeometry().getCoordinates()[0];
+        const pointY = feature.getGeometry().getCoordinates()[1];
+
+
+        map.getView().animate({
+            center: [pointX, pointY],
+            zoom: 10
         });
 
+        var showPanel = jsPanel.create({
+            content: `<div>
+                        <h3>Nokta Adı: ${name}</h3>
+                        <p>WKT String: ${wktString}</p>
+                    </div>`,
+            headerTitle: 'Nokta Detayı',
+            theme: 'primary',
+            position: 'center-top 0 58',
+            contentSize: '400 200',
+            borderRadius: '20px',
+            animateIn: 'jsPanelFadeIn',
+            animateOut: 'jsPanelFadeOut',
+            headerControls: {
+                minimize: 'remove',
+                maximize: 'remove',
+            },
+            onclosed: () => {
+                map.getView().animate({
+                    center: ol.proj.fromLonLat([35, 39]),
+                    zoom: 7
+                });
+            }
+        });
+    }  
+    if(data.data.wktString.includes("POLYGON") )
+    {
+        const wktString = data.data.wktString;
+        const name = data.data.name;
+        const format = new ol.format.WKT();
+        const feature = format.readFeature(wktString, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: 'EPSG:3857'
+        });
+        //polgonu ekranın tamamını kaplayacak şekilde animasyonlu zoom yapma işlemi
+        map.getView().fit(feature.getGeometry().getExtent(), { duration: 2000 });
 
-    });
-});
 
-// haritadaki nokta seçilince bir jsPanel oluşturup seçilen noktanın bilgilerini gösterme işlemi ve düzenleme işlemi
-map.on('click', async (event) => {
-    map.forEachFeatureAtPixel(event.pixel, async (feature) => {
-        const id = feature.get('id');
-        const name = feature.get('name');
-        selectedFeature = feature;  
-        ZoomPoint(id);
-    });
-});
+        
 
-// nokta düzenleme işlemi
-const editPoint = async (id, name) => {
-    const data = await FetchPoint(id);
-     // jsPanel ile yeni bir panel oluşturma
-     jsPanel.create({
-        content: `<input type="text" id="editPointX" value="${data.data.pointX}" style="width: 80%; padding: 5px; margin-top: 5px;">
-        <br>
-        <input type="text" id="editPointY" value="${data.data.pointY}" style="width: 80%; padding: 5px; margin-top: 5px;">
-        <br>
-        <input type="text" id="editPointName" value="${name}" style="width: 80%; padding: 5px; margin-top: 5px;">
-        <button id="savePointBtn" style="margin-top: 10px; padding: 5px 15px;">Kaydet</button>
-    </div>`,
-        id: 'editPointPanel',
-        headerTitle: 'Nokta Düzenle',
-        theme: 'primary',
-        position: 'center 0 1',
-        contentSize: '450 200',
-        borderRadius: '20px',
-        animateIn: 'jsPanelFadeIn',
-        animateOut: 'jsPanelFadeOut',
-        headerControls: {
-            minimize: 'remove',
-            maximize: 'remove',
-        },
-        callback: function() {
-            // Kaydet butonuna tıklama olayını bağlama
-            $(document).on('click', '#savePointBtn', async function () {
-                const updatedName = document.getElementById('editPointName').value;
-    
-                const updatedPoint = {
-                    id: id,
-                    name: updatedName,
-                    pointX: data.data.pointX,
-                    pointY: data.data.pointY
-                };
-    
-                try {
-                    const response = await fetch(`https://localhost:7140/api/Point/${id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(updatedPoint)
-                    });
-    
-                    if (response.ok) {
-                        console.log('Düzenlendi:', updatedPoint);
+        var showPanel = jsPanel.create({
+            content: `<div>
+                        <h3>Nokta Adı: ${name}</h3>
+                        <p>WKT String: ${wktString}</p>
+                    </div>`,
+            headerTitle: 'Nokta Detayı',
+            theme: 'primary',
+            position: 'center-top 0 58',
+            contentSize: '400 200',
+            borderRadius: '20px',
+            animateIn: 'jsPanelFadeIn',
+            animateOut: 'jsPanelFadeOut',
+            headerControls: {
+                minimize: 'remove',
+                maximize: 'remove',
+            },
+            onclosed: () => {
+                map.getView().animate({
+                    center: ol.proj.fromLonLat([35, 39]),
+                    zoom: 7
+                });
+            }
+        });
+    }
+}
 
-                        // güncellendi mesajı ver
-                        jsPanel.create({
-                            headerTitle: 'Başarılı',
-                            content: 'Nokta başarıyla güncellendi.',
-                            contentSize: '100 100',
-                            theme: 'success',
-                            position: 'center',
-                            contentSize: '300 100',
-                            borderRadius: '20px',
-                            animateIn: 'jsPanelFadeIn',
-                            animateOut: 'jsPanelFadeOut',
-                            headerControls: {
-                                minimize: 'remove',
-                                maximize: 'remove',
-                            },
-                            
-                        });
-
-                    } else {
-                        console.error('Düzenlenemedi:', response.status);
-                    }
-                } catch (error) {
-                    console.error('Fetch hatası:', error);
+const select = new ol.interaction.Select();
+map.addInteraction(select);
+//seçilenin wkt stringini bir stringe atama işlemi
+select.on('select', function (e) {
+    if (e.selected.length > 0) {
+        const feature = e.selected[0];
+        const wktString = new ol.format.WKT().writeFeature(feature);
+        selectedFeature = feature;
+        console.log(wktString);
+        //wkt stringe göre data tablosundan veri çekme işlemi
+        const data = FetchAllWks();
+        data.then((res) => {
+            res.data.forEach((item) => {
+                if (item.wktString === wktString) {
+                    const id = item.id;
+                    const name = item.name; 
+                    ZoomPoint(id);
                 }
             });
-        },
+        });
+    }
+});
 
-        onclosed: () => {
-            map.getView().animate({
-                center: ol.proj.fromLonLat([35, 39]),
-                zoom: 7
-            });
-        }
-    });
-};
+//line ve polygon çizme işlemi için vector source oluşturma
+const vectorSource = new ol.source.Vector();
+const vectorLayer = new ol.layer.Vector({
+    source: vectorSource
+});
+map.addLayer(vectorLayer);
 
-// Nokta yakınlaştırma işlemi
-const ZoomPoint = async (id) => {
-    const data = await FetchPoint(id);
-    const pointX = data.data.pointX;
-    const pointY = data.data.pointY;
+//linestring çizme işlemi
+document.getElementById('drawLineBtn').addEventListener('click', () => {
+    map.getViewport().style.cursor = 'crosshair';
+    const draw = new ol.interaction.Draw({
+        source: vectorSource,
+        type: 'LineString'
+    });
+    map.addInteraction(draw);
+    draw.on('drawend', (event) => {
 
-    map.getView().animate({
-        center: ol.proj.fromLonLat([pointX, pointY]),
-        zoom: 10
+        map.getViewport().style.cursor = 'default';
+        const wktString = new ol.format.WKT().writeFeature(event.feature);
+        
+        //bir jspanel oluştur ve wkt databasei için gerekli isim bilgisini al sonrasında wkt stringini al ve databaseye kaydet
+
+        var panel = jsPanel.create({
+            content: `<div>
+                        <h3>İsim</h3>
+                        <input type="text" id="lineName" class="form-control" />
+                        <button id="saveLineBtn" class="btn btn-primary">Kaydet</button>
+                    </div>`,
+            headerTitle: 'İsim Giriniz',
+            theme: 'primary',
+            position: 'center-top 0 58',
+            contentSize: '400 200',
+            borderRadius: '20px',
+            animateIn: 'jsPanelFadeIn',
+            animateOut: 'jsPanelFadeOut',
+            headerControls: {
+                minimize: 'remove',
+                maximize: 'remove',
+            },
+            callback: () => {
+                document.getElementById('saveLineBtn').addEventListener('click', async () => {
+                    const lineName = document.getElementById('lineName').value;
+                    const lineData = {
+                        wktString: wktString,
+                        name: lineName
+                    };
+                    try {
+                        const response = await fetch('https://localhost:7140/api/Wkt', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(lineData)
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            const format = new ol.format.WKT();
+                            const feature = format.readFeature(wktString, {
+                                dataProjection: 'EPSG:4326',
+                                featureProjection: 'EPSG:3857'
+                            });
+
+                            const lineStyle = new ol.style.Style({
+                                stroke: new ol.style.Stroke({
+                                    color: '#FF0000',
+                                    width: 3
+                                })
+                            });
+
+                            feature.setStyle(lineStyle);
+                            feature.setId(data.data.id);
+
+                            vectorSource.addFeature(feature);
+                        } else {
+                            console.error('Error adding line:', response.status);
+                        }
+                    } catch (error) {
+                        console.error('Fetch error:', error);
+                    }
+                    FetchData();
+                    panel.close();
+                });
+            },
+            onclosed: () => {
+                map.removeInteraction(draw);
+            }
+        });
+        
+        console.log(wktString);
+        map.removeInteraction(draw);
     });
-    // bir jspanel oluşturup seçilen noktanın bilgilerini sayfanın en üstünde gösterme işlemi
-    
-    jsPanel.create({
-        content: `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10px;">
-        <label>Seçilen Noktanın Enlem Değeri: ${pointX}</label>
-        <br>
-        <label>Seçilen Noktanın Boylam Değeri: ${pointY}</label>
-        <br>
-        <label>Seçilen Noktanın Adı: ${data.data.name}</label>
-        <button id="editPointBtn" style="margin-top: 10px; padding: 5px 15px;">Düzenle</button>
-    </div>`,
-        id: 'showPointPanel',
-        headerTitle: 'Seçilen Nokta',
-        theme: 'primary',
-        position: 'center-top 0 50',
-        contentSize: '450 150',
-        borderRadius: '20px',
-        animateIn: 'jsPanelFadeIn',
-        animateOut: 'jsPanelFadeOut',
-        headerControls: {
-            minimize: 'remove',
-            maximize: 'remove',
-        },
-        onclosed: () => {
-            map.getView().animate({
-                center: ol.proj.fromLonLat([35, 39]),
-                zoom: 7
-            });
-        }
+});
+
+//polygon çizme işlemi ve databaseye kaydetme işlemi
+document.getElementById('drawPolygonBtn').addEventListener('click', () => {
+    map.getViewport().style.cursor = 'crosshair';
+    const draw = new ol.interaction.Draw({
+        source: vectorSource,
+        type: 'Polygon'
     });
-};
+    map.addInteraction(draw);
+    draw.on('drawend', (event) => {
+        map.getViewport().style.cursor = 'default';
+        const wktString = new ol.format.WKT().writeFeature(event.feature);
+        var panel = jsPanel.create({
+            content: `<div>
+                        <h3>İsim</h3>
+                        <input type="text" id="polygonName" class="form-control" />
+                        <button id="savePolygonBtn" class="btn btn-primary">Kaydet</button>
+                    </div>`,
+            headerTitle: 'İsim Giriniz',
+            theme: 'primary',
+            position: 'center-top 0 58',
+            contentSize: '400 200',
+            borderRadius: '20px',
+            animateIn: 'jsPanelFadeIn',
+            animateOut: 'jsPanelFadeOut',
+            headerControls: {
+                minimize: 'remove',
+                maximize: 'remove',
+            },
+            callback: () => {
+                document.getElementById('savePolygonBtn').addEventListener('click', async () => {
+                    const polygonName = document.getElementById('polygonName').value;
+                    const polygonData = {
+                        wktString: wktString,
+                        name: polygonName
+                    };
+                    try {
+                        const response = await fetch('https://localhost:7140/api/Wkt', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(polygonData)
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            const format = new ol.format.WKT();
+                            const feature = format.readFeature(wktString, {
+                                dataProjection: 'EPSG:4326',
+                                featureProjection: 'EPSG:3857'
+                            });
+
+                            const polygonStyle = new ol.style.Style({
+                                stroke: new ol.style.Stroke({
+                                    color: '#0000FF',
+                                    width: 3
+                                }),
+                                fill: new ol.style.Fill({
+                                    color: 'rgba(0, 0, 255, 0.1)'
+                                })
+                            });
+
+                            feature.setStyle(polygonStyle);
+                            feature.setId(data.data.id);
+
+                            vectorSource.addFeature(feature);
+                        }
+                        else {
+                            console.error('Error adding polygon:', response.status);
+                        }
+                    } catch (error) {
+                        console.error('Fetch error:', error);
+                    }
+                    FetchData();
+                    panel.close();
+                }
+                );
+            }
+            ,
+            onclosed: () => {
+                map.removeInteraction(draw);
+            }
+        });
+    }
+    );
+}
+);
+
+//noktaları lineları ve polygonları databaseden çekerek haritada gösterme işlemi
+
 

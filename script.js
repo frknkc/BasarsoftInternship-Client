@@ -25,38 +25,58 @@ const map = new ol.Map({
 
 });
 
+// WKT verilerini çekme işlemi
 const FetchData = async () => {
+    const response = await fetch('https://localhost:7140/api/Wkt');
+    const data = await response.json();
+    return data;
+}
 
-fetch('https://localhost:7140/api/Wkt')
-    .then(response => response.json())
-    .then(data => {
-        console.log(data);
-       
-        // Eğer data bir dizi değilse, doğru yapıya erişin
-        const wktArray = Array.isArray(data) ? data : data.data || [];
+    // WKT verilerini haritaya ekleme işlemi
+    const source = new ol.source.Vector();
+    const layer = new ol.layer.Vector({
+        source: source
+    });
+    map.addLayer(layer);
 
-        wktArray.forEach(item => {
-            const wktString = item.wktString;
-          
-
+    const AddFeatures = async () => {
+        const data = await FetchData();
+        data.data.forEach((item) => {
             const format = new ol.format.WKT();
-            const feature = format.readFeature(wktString, {
-                dataProjection: 'EPSG:4326',
-                featureProjection: 'EPSG:3857'
+            const feature = format.readFeature(item.wktString, {
+              dataProjection: 'EPSG:4326',
+                                featureProjection: 'EPSG:3857'
             });
+            console.log(item.wktString);
 
-            let style;
-            const geometryType = feature.getGeometry().getType();
+            if (item.wktString.includes("POINT")) {
+                const pointStyle = new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: 7,
+                        fill: new ol.style.Fill({
+                            color: '#00FF00'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#000000',
+                            width: 2
+                        })
+                    })
+                });
 
-            if (geometryType === 'LINESTRING') {
-                style = new ol.style.Style({
+                feature.setStyle(pointStyle);
+            }
+            if (item.wktString.includes("LINESTRING")) {
+                const lineStyle = new ol.style.Style({
                     stroke: new ol.style.Stroke({
                         color: '#FF0000',
                         width: 3
                     })
                 });
-            } else if (geometryType === 'POLYGON') {
-                style = new ol.style.Style({
+
+                feature.setStyle(lineStyle);
+            }
+            if (item.wktString.includes("POLYGON")) {
+                const polygonStyle = new ol.style.Style({
                     stroke: new ol.style.Stroke({
                         color: '#0000FF',
                         width: 3
@@ -65,40 +85,24 @@ fetch('https://localhost:7140/api/Wkt')
                         color: 'rgba(0, 0, 255, 0.1)'
                     })
                 });
-            } else if (geometryType === 'POINT') {
 
-                // SVG simgesi
-                
-
-                // Stil tanımlama
-                style = new ol.style.Style({
-                    image: new ol.style.Icon({
-                        src: 'data:image/svg+xml;base64,' + btoa(svgIcon),
-                        scale: 0.1, // Simgeyi ölçeklendirmek için
-                        anchor: [0.5, 1] // İşaretin en alt noktasını belirlemek için
-                    })
-                });
+                feature.setStyle(polygonStyle);
             }
 
-            feature.setStyle(style);
-            const vectorSource = new ol.source.Vector({
-                features: [feature]
-            });
+            feature.setId(item.id);
+            source.addFeature(feature);
+        }
+        );
+    }
 
-            const vectorLayer = new ol.layer.Vector({
-                source: vectorSource
-            });
 
-            map.addLayer(vectorLayer);
-        });
-    })
-    .catch(error => {
-        console.error('Fetch error:', error);
+    // sayfa yüklendiğinde haritaya verileri ekleme işlemi
+    document.addEventListener('DOMContentLoaded', () => {
+        AddFeatures();
     });
-}
 
-//sayfa yüklendiğinde FetchData fonksiyonunu çalıştır
-window.onload = FetchData;
+
+
 
 let selectedFeature = null;
 
@@ -165,7 +169,7 @@ document.getElementById('addPointBtn').addEventListener('click', () => {
                     const format = new ol.format.WKT();
                     const feature = format.readFeature(wktPoint, {
                         dataProjection: 'EPSG:4326',
-                        featureProjection: 'EPSG:3857'
+                                featureProjection: 'EPSG:3857'
                     });
 
                     const pointStyle = new ol.style.Style({
@@ -322,8 +326,8 @@ const ZoomPoint = async (id) => {
         const name = data.data.name;
         const format = new ol.format.WKT();
         const feature = format.readFeature(wktString, {
-            dataProjection: 'EPSG:4326',
-            featureProjection: 'EPSG:3857'
+           dataProjection: 'EPSG:4326',
+                                featureProjection: 'EPSG:3857'
         });
         //lineın en alt ve en üst noktalarını alıp zoom yapma işlemi
         let coordinates = feature.getGeometry().getCoordinates();
@@ -366,7 +370,7 @@ const ZoomPoint = async (id) => {
         const format = new ol.format.WKT();
         const feature = format.readFeature(wktString, {
             dataProjection: 'EPSG:4326',
-            featureProjection: 'EPSG:3857'
+                                featureProjection: 'EPSG:3857'
         });
         const pointX = feature.getGeometry().getCoordinates()[0];
         const pointY = feature.getGeometry().getCoordinates()[1];
@@ -408,7 +412,7 @@ const ZoomPoint = async (id) => {
         const format = new ol.format.WKT();
         const feature = format.readFeature(wktString, {
             dataProjection: 'EPSG:4326',
-            featureProjection: 'EPSG:3857'
+                                featureProjection: 'EPSG:3857'
         });
         //polgonu ekranın tamamını kaplayacak şekilde animasyonlu zoom yapma işlemi
         map.getView().fit(feature.getGeometry().getExtent(), { duration: 2000 });
@@ -545,7 +549,7 @@ document.getElementById('drawLineBtn').addEventListener('click', () => {
                     } catch (error) {
                         console.error('Fetch error:', error);
                     }
-                    FetchData();
+                    AddFeatures();
                     panel.close();
                 });
             },
@@ -632,7 +636,7 @@ document.getElementById('drawPolygonBtn').addEventListener('click', () => {
                     } catch (error) {
                         console.error('Fetch error:', error);
                     }
-                    FetchData();
+                    AddFeatures();
                     panel.close();
                 }
                 );
@@ -646,6 +650,8 @@ document.getElementById('drawPolygonBtn').addEventListener('click', () => {
     );
 }
 );
+
+
 
 //noktaları lineları ve polygonları databaseden çekerek haritada gösterme işlemi
 

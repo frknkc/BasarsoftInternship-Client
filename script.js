@@ -1,5 +1,38 @@
+// Cookie'ye veri yazmak için bir fonksiyon
+function setCookie(name, value, days) {
+    const date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000)); // Süreyi belirle (gün cinsinden)
+    const expires = "expires=" + date.toUTCString();
+    document.cookie = name + "=" + value + ";" + expires + ";path=/";
+}
+
+// Cookie'den veri okumak için bir fonksiyon
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(nameEQ) === 0) {
+            return c.substring(nameEQ.length, c.length);
+        }
+    }
+    return "";
+}
+
+
 document.getElementById('toggle-dark-mode').addEventListener('click', () => {
     document.body.classList.toggle('dark-mode');
+
+    // Dark mode etkinse cookie'ye "enabled" yaz, değilse "disabled" yaz
+    if (document.body.classList.contains('dark-mode')) {
+        setCookie("darkMode", "enabled", 7); // 7 gün geçerli olacak bir cookie
+    } else {
+        setCookie("darkMode", "disabled", 7);
+    }
 });
 
 document.getElementById('return-to-origin').addEventListener('click', () => {
@@ -80,7 +113,7 @@ const AddFeatures = async () => {
             const pointStyle = new ol.style.Style({
                 image: new ol.style.Icon({
                     src: 'data:image/svg+xml,' + encodeURIComponent(svgIcon),
-                    scale: 0.1
+                    scale: 0.15 
                 })
             });
            
@@ -118,6 +151,10 @@ const AddFeatures = async () => {
     // sayfa yüklendiğinde haritaya verileri ekleme işlemi
     document.addEventListener('DOMContentLoaded', () => {
         AddFeatures();
+        const darkModeCookie = getCookie("darkMode");
+    if (darkModeCookie === "enabled") {
+        document.body.classList.add('dark-mode');
+    }
     });
 
 let selectedFeature = null;
@@ -540,7 +577,11 @@ const selectInteraction = new ol.interaction.Select({
 map.addInteraction(selectInteraction);
 
 // Seçim olayını dinleyin
-selectInteraction.on('select', async function (event) {
+selectInteraction.on('select', function (event) {
+    //eski seçimleri temizle
+    if (selectedFeature) {
+        selectedFeature.setStyle(null);
+    }
     const feature = event.selected[0];  // Seçilen ilk feature'ı al
     
     if (feature) {
@@ -565,6 +606,7 @@ async function openFeaturePanel( feature) {
                 zoom: 10
             });
         }
+
         else {
         // Haritada feature'ı ortala ve yakınlaştır
         map.getView().fit(geometry.getExtent(), { duration: 1000 });
@@ -590,16 +632,17 @@ async function openFeaturePanel( feature) {
 
 
     // Feature bilgilerini al (örneğin isim veya wktString)
-    const featureName = data.name;
+    let featureName = data.name;
     // Panel oluşturma
     var panel = jsPanel.create({
         content: `<div>
                     <h3>Ad: ${featureName}</h3>
                     ${detaylar}
-                    <h3>WKT : ${wktString}</h3>
                     <button id="editUsingTextBtn" class="btn btn-primary">Wkt Üzerinden Düzenle</button>
                     <button id="editUsingMapBtn" class="btn btn-primary">Map Üzerinden Düzenle</button> 
                     <button id="deleteFeatureBtn" class="btn btn-danger">Sil</button>
+                    <h3>WKT : ${wktString}</h3>
+                    
                 </div>`,
         headerTitle: 'Feature Bilgileri',
         theme: 'primary',
@@ -672,7 +715,6 @@ async function openFeaturePanel( feature) {
             document.getElementById('editUsingMapBtn').addEventListener('click', () => {
                 // Map üzerinden düzenleme işlemi
                 panel.close();
-                map.getViewport().style.cursor = 'crosshair';
                 
                 const modify = new ol.interaction.Modify({
                     source: vectorSource,

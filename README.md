@@ -22,8 +22,8 @@ Harita ilk yüklendiğinde Türkiye sınırlarını içerisine alacak şekilde z
 
 **•Nokta Ekleme butonuna basıldığında** mouse imleci crosshaire dönmekte ve işaretlenmek istenilen noktaya basıldığında o noktanın koordinatlarını alıp animasyonlu zoom işlemi ile birlikte bir popup açılmaktadır. popup içerisine o noktaya verilmek istenen ad girildikten sonra kaydet butonuna basıldıktan sonra api post işlemi gerçekleşmekte ve haritaya özelleştirilmiş lokasyon simgesi koyulmaktadır. Artık o nokta database'de wkt formatında bulunmakta ve sayfa her yenilendiğinde fetch işlemi yapılarak haritaya işaretlenmektedir.
 
-![App Screenshot](//s7.ezgif.com/tmp/ezgif-7-e907fe1ea4.gif)
+![ezgif com-animated-gif-maker](https://github.com/user-attachments/assets/e6e6210e-28f8-4416-85a9-a5ffef893a46)
 
 **•Alan Ekleme butonuna basıldığında** mouse imleci crosshaire dönmekte ve işaretlenmek istenilen alanın ilk noktasına basıldığında mouse nereye çekilirse oraya doğru bir kenar çıkmakta ve ilk basılan noktaya dönene kadar o alan ortaya çıkmatadır. İlk noktaya geri dönüldüğünde alan tamamlanmakta ve bir jspanel ortaya çıkmatadır. Bu panelde kullanıcıdan alan için bir isim alınmaktadır. O alana verilmek istenen ad girildikten sonra kaydet butonuna basıldıktan sonra api post işlemi gerçekleşmekte ve haritaya o alan eklenmektedir. Artık o alan database'de wkt formatında bulunmakta ve sayfa her yenilendiğinde fetch işlemi yapılarak haritaya işaretlenmektedir.
 
-![App Screenshot](//s7.ezgif.com/tmp/ezgif-7-8c952b2545.gif)
+!![ezgif com-resize](https://github.com/user-attachments/assets/773d9e39-7e8b-4da3-92c0-cb80f8adde6e)

@@ -13,12 +13,11 @@ https://github.com/frknkc/BasarsoftInternship-API reposundaki api kullanılarak 
 
 Arayüzde responsive bir tasarım kullanılmış olup navbar tasarımı ekranın altına haritanın üzerine konumlandırılmıştır. İçerisinde Nokta, çizgi ve alan ekleme butonları ve listeleme butonları bulunmaktadır. 
 
-![App Screenshot](https://img001.prntscr.com/file/img001/JQhguY_pR4CHzsOsI5SQoA.png)
+![App Screenshot](https://img001.prntscr.com/file/img001/0l66b2AxT0CNo0pErI0ssw.png)
 
 Harita ilk yüklendiğinde Türkiye sınırlarını içerisine alacak şekilde zoomlanmış ve cookie'den tema kontrolü yapılarak yüklenmektedir. Sağ üste göründüğü üzere 2 buton bulunmaktadır. Bu butonlardan üstteki dark mode / light mode değişiklik butonu, alttaki ise haritadal, herhangi bir yakınlaştırma, hareket işleminden sonra tek tık ile ana görünüme dönmeyi kolaylaştırmak için eklenmiştir. Dark mode görüntüsü de aşağıdaki gibidir.
 
-![App Screenshot](https://img001.prntscr.com/file/img001/09lde3jsSlWh4AXYSIC_yQ.png
-)
+![App Screenshot](https://img001.prntscr.com/file/img001/3tbyu56-Tbq4_jd_OoQ8Fg.png)
 
 **•Nokta Ekleme butonuna basıldığında** mouse imleci crosshaire dönmekte ve işaretlenmek istenilen noktaya basıldığında o noktanın koordinatlarını alıp animasyonlu zoom işlemi ile birlikte bir popup açılmaktadır. popup içerisine o noktaya verilmek istenen ad girildikten sonra kaydet butonuna basıldıktan sonra api post işlemi gerçekleşmekte ve haritaya özelleştirilmiş lokasyon simgesi koyulmaktadır. Artık o nokta database'de wkt formatında bulunmakta ve sayfa her yenilendiğinde fetch işlemi yapılarak haritaya işaretlenmektedir.
 

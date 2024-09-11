@@ -28,3 +28,23 @@ Harita ilk yüklendiğinde Türkiye sınırlarını içerisine alacak şekilde z
 
 ![ezgif com-resize (1)](https://github.com/user-attachments/assets/319beb02-795a-4534-8b3c-8dd9fa085dca)
 
+
+**•Çizgi Ekleme butonuna basıldığında** mouse imleci crosshaire dönmekte ve işaretlenmek istenilen çizginin ilk noktasına basıldığında mouse nereye çekilirse oraya doğru bir kenar çıkmakta ve çift tık yapılana kadar o çizgi ortaya çıkmatadır. Çİft tıklandığında çizgi tamamlanmakta ve bir jspanel ortaya çıkmatadır. Bu panelde kullanıcıdan çizgi için bir isim alınmaktadır. O çizgiye verilmek istenen ad girildikten sonra kaydet butonuna basıldıktan sonra api post işlemi gerçekleşmekte ve haritaya o çizgi eklenmektedir. Artık o çizgi database'de wkt formatında bulunmakta ve sayfa her yenilendiğinde fetch işlemi yapılarak haritaya işaretlenmektedir.
+
+![ezgif com-resize (2)](https://github.com/user-attachments/assets/76a886c7-395d-47df-95ca-dc596bc70436)
+
+
+**•Listeleme butonuna basıldığında** bir jspanel açılmakta ve databaseden tüm featurelar çekilmektedir. Datatables kullanılarak tüm veriler tabloya işlenmektedir ilk sutünda feature ismi ikinci sutünda wkt stringi üçüncü sutünda ise 3 işlemin bulunduğu işlemler sutünü bulunmaktadır. Sağ üste arama butonu bulunmakta ve çok hızlı reaksiyonla aktif olarak çalışmaktadır.  
+
+![ezgif com-animated-gif-maker (2)](https://github.com/user-attachments/assets/26d67638-c96a-4770-959c-30be06ff239a)
+
+
+**•Haritadan herhangi bir feature'a basıldığında veya listelemeden göster butonuna basıldığında** o feature ekrana animasyonlu bir şekilde ortalanmakta ve bir jspanel açılmaktadır. Her feature'ın kendi özelliğine göre bilgiler yazmaktadır. Nokta için sadece ismi ve wkt stringi, çizgi için noktadan ekstra olarak çizgi uzunluğunun km cinsinde ölçülmüş hali, alan için ise noktadan farklı olarak o alanın kaç kilometrekare olduğu bilgisi çıkmaktadır. Ayrıca her panelde silme ve düzenleme işlemleri için butonlar bulunmaktadır. Manuel olarak stringi ve adı değiştirebilmekteyiz. Harita kullanılarak ise kenar kaydırma, sürükleme, uzatma, genişletme, kısaltma, küçültme vb. işlemleri kolaylıkla halledebilmekteyiz.
+
+![ezgif com-animated-gif-maker (3)](https://github.com/user-attachments/assets/1fdc7f75-6aa6-4e80-a25e-8b03910ae5aa)
+
+
+Staj süresi boyunca bana desteklerini sunan Başarsoft ailesine teşekkürlerimi sunar, iyi günler dilerim.
+
+Furkan KOÇ
+

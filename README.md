@@ -26,4 +26,5 @@ Harita ilk yüklendiğinde Türkiye sınırlarını içerisine alacak şekilde z
 
 **•Alan Ekleme butonuna basıldığında** mouse imleci crosshaire dönmekte ve işaretlenmek istenilen alanın ilk noktasına basıldığında mouse nereye çekilirse oraya doğru bir kenar çıkmakta ve ilk basılan noktaya dönene kadar o alan ortaya çıkmatadır. İlk noktaya geri dönüldüğünde alan tamamlanmakta ve bir jspanel ortaya çıkmatadır. Bu panelde kullanıcıdan alan için bir isim alınmaktadır. O alana verilmek istenen ad girildikten sonra kaydet butonuna basıldıktan sonra api post işlemi gerçekleşmekte ve haritaya o alan eklenmektedir. Artık o alan database'de wkt formatında bulunmakta ve sayfa her yenilendiğinde fetch işlemi yapılarak haritaya işaretlenmektedir.
 
-!![ezgif com-resize](https://github.com/user-attachments/assets/773d9e39-7e8b-4da3-92c0-cb80f8adde6e)
+![ezgif com-resize (1)](https://github.com/user-attachments/assets/319beb02-795a-4534-8b3c-8dd9fa085dca)
+
